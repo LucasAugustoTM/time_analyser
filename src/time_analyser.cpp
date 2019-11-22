@@ -13,19 +13,21 @@
 #define NUM_MSGS 100			// Sampling amount
 
 int msg_size = 8;
-std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> umap8;
-std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> umap16;
-std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> umap32;
 
-// Hash to store msg and publishing time
-//std::unordered_map<std::string, ros::Time> umap; 
-//std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> umap; 
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap8;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap16;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap32;
+
 std::chrono::high_resolution_clock::time_point begin, end;
+
+std::pair<std::chrono::high_resolution_clock::time_point, long int> pair;
 
 // Time measurement
 //ros::Time     begin;
 //ros::Duration spent_time;
-bool 	flag_100msgs_read= false;
+bool 	flag_100msgs_read   = false;
 int  	num_msgs_counter    = 0;
 
 // File writing
@@ -36,66 +38,51 @@ std::ofstream myfile("/home/lucasaugusto/orca_ws/src/time_analyser/data/dataColl
 void mpsocToRosCallback(const std_msgs::String::ConstPtr& msg) {
 	
 	end = std::chrono::high_resolution_clock::now();
-  	auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>( end - begin ).count();	
-	
+	auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count();
+
 	ROS_INFO("RECEIVE String: %s, string size: %d, duration: %d", msg->data.c_str(), msg->data.size(), duration);
 
-	std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point>::const_iterator got8 = umap8.find(msg->data);
-	std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point>::const_iterator got16 = umap16.find(msg->data);	
-	std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point>::const_iterator got32 = umap32.find(msg->data);
+	std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::const_iterator got8  = umap8.find(msg->data);
 
+	std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::const_iterator got16  = umap16.find(msg->data);
+
+	std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::const_iterator got32  = umap32.find(msg->data);
 	
-	 //myfile << got->first << ", " << spent_time.toNSec() << std::endl; // ROS Version
-		//ROS_INFO("RECEIVE String: %s, string size: %d, duration: %d", msg->data.c_str(), msg->data.size(), duration);
-	  //  	for (int j =0; j < 100; j++) {
-	    //		for (i = hash_vector.size; i != has_vector.end) {
-		//		myfile << it_hash_vector.key <<
+	pair.first = begin;
 
 	switch (msg_size) {
 	
 	    case 8: 
-		if(got8 != umap8.end()) {
-
-			myfile << got8->first << "," << duration << std::endl; // Chrono Version
-			umap8.erase(msg->data);
+		if(got8 != umap8.end()) {		
+			pair.second = std::chrono::duration_cast<std::chrono::nanoseconds>( end - got8->second.first ).count();
+			umap8[msg->data] = pair;
 		  	if(num_msgs_counter == NUM_MSGS) {
 		  		flag_100msgs_read = true;
 			}
 		  	num_msgs_counter++;
-	  	  	if (umap8.size() > 0) {
-		   		umap8.erase(umap8.begin(), umap8.end());
-			}
 		}
 		break;
 	    case 16: 
 		if(got16 != umap16.end()) {
-
-			myfile << got16->first << "," << duration << std::endl; // Chrono Version
-			umap16.erase(msg->data);
+			pair.second = std::chrono::duration_cast<std::chrono::nanoseconds>( end - got16->second.first ).count();
+			umap16[msg->data] = pair;
 		  	if(num_msgs_counter == NUM_MSGS) {
 		  		flag_100msgs_read = true;
 			}
 		  	num_msgs_counter++;
-	  	  	if (umap16.size() > 0) {
-		   		umap16.erase(umap16.begin(), umap16.end());
-			}
 		}
 		break;
 	    case 32: 
 		if(got32 != umap32.end()) {
-
-			myfile << got32->first << "," << duration << std::endl; // Chrono Version
-			umap32.erase(msg->data);
+			pair.second = std::chrono::duration_cast<std::chrono::nanoseconds>( end - got32->second.first ).count();
+			umap32[msg->data] = pair;
 		  	if(num_msgs_counter == NUM_MSGS) {
 		  		flag_100msgs_read = true;
 			}
 		  	num_msgs_counter++;
-	  	  	if (umap32.size() > 0) {
-		   		umap32.erase(umap32.begin(), umap32.end());
-			}
 		}
 		break;
-	}
+	} 
 }
 
 int main(int argc, char **argv)
@@ -138,18 +125,22 @@ int main(int argc, char **argv)
 	   	 orca_ros_to_mpsoc_pub.publish(msg);
 	   	 begin = std::chrono::high_resolution_clock::now();
 
-	   	 //ROS_INFO("String: %s, string size: %d", msg.data.c_str(), msg.data.size());
+	   	 ROS_INFO("String: %s, string size: %d", msg.data.c_str(), msg.data.size());
 
 	   	 // collects publishing time 
 	   	 //begin = ros::Time::now();
 	
+		 pair.first = begin;
+		 pair.second = 0;
+
 	  	  switch (msg_size) {
 			case 8:
-	    			umap8[msg.data] = begin;
+
+	    			umap8[msg.data] = pair;
 			case 16:
-	    			umap16[msg.data] = begin;
+	    			umap16[msg.data] = pair;
 			case 32:
-	    			umap32[msg.data] = begin;
+	    			umap32[msg.data] = pair; 
 	   	 }	
 
 	   	 ros::spinOnce();
@@ -158,9 +149,37 @@ int main(int argc, char **argv)
 	   	 loop_rate = ros::Rate(rate);
     
  	 }
-	msg_size = msg_size * 2;
-  }		
+	msg_size = msg_size * 2;  
+  }
 
+ //msg_size = 8;	
+	
+ std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it8=umap8.begin();
+ std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it16=umap16.begin();
+ std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it32=umap32.begin();
+ for(int i=0; i<NUM_MSGS; i++) {
+	myfile << it8->first << "," << it8->second.second << ",," << it16->first << "," << it16->second.second << ",," << it32->first << "," << it32->second.second << std::endl; 
+	it8++;
+	it16++;
+	it32++;
+ }
+
+	/*#for(std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it=umap8.begin(); it<=umap8.end(); ++it) {@*/
+
+ /*@while (msg_size != 64) {
+	for(std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it=umap8.begin(); it!=umap8.end(); ++it) {
+  		myfile << umap8.begin()->first << "," << umap8.begin()->second.second << std::endl; 
+	}
+	for(std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it=umap16.begin(); it!=umap16.end(); ++it) {
+  		myfile << ",,," << umap16.begin()->first << "," << umap16.begin()->second.second << std::endl; 
+	}
+	for(std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it=umap32.begin(); it!=umap32.end(); ++it) {
+  		myfile << ",,,,,," << umap32.begin()->first << "," << umap32.begin()->second.second << std::endl; 
+	}
+	msg_size = msg_size * 2;
+} @*/
+	
+		
   myfile.close();
   return 0;
 }
