@@ -22,6 +22,12 @@ std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::ti
 
 std::chrono::high_resolution_clock::time_point begin, end;
 
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator got8;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator got16;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator got32;
+
 std::pair<std::chrono::high_resolution_clock::time_point, long int> pair;
 
 // Time measurement
@@ -42,11 +48,11 @@ void mpsocToRosCallback(const std_msgs::String::ConstPtr& msg) {
 
 	ROS_INFO("RECEIVE String: %s, string size: %d, duration: %d", msg->data.c_str(), msg->data.size(), duration);
 
-	std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::const_iterator got8  = umap8.find(msg->data);
+	got8  = umap8.find(msg->data);
 
-	std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::const_iterator got16  = umap16.find(msg->data);
+	got16  = umap16.find(msg->data);
 
-	std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::const_iterator got32  = umap32.find(msg->data);
+	got32  = umap32.find(msg->data);
 	
 	pair.first = begin;
 
@@ -154,14 +160,14 @@ int main(int argc, char **argv)
 
  //msg_size = 8;	
 	
- std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it8=umap8.begin();
- std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it16=umap16.begin();
- std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it32=umap32.begin();
+ got8 = umap8.begin();
+ got16 = umap16.begin();
+ got32 = umap32.begin();
  for(int i=0; i<NUM_MSGS; i++) {
-	myfile << it8->first << "," << it8->second.second << ",," << it16->first << "," << it16->second.second << ",," << it32->first << "," << it32->second.second << std::endl; 
-	it8++;
-	it16++;
-	it32++;
+	myfile << got8->first << "," << got8->second.second << ",," << got16->first << "," << got16->second.second << ",," << got32->first << "," << got32->second.second << std::endl; 
+	got8++;
+	got16++;
+	got32++;
  }
 
 	/*#for(std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator it=umap8.begin(); it<=umap8.end(); ++it) {@*/
