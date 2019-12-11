@@ -19,6 +19,21 @@ std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::ti
 
 std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap8;
 
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap16;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap32;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap64;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap128;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap256;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap512;
+
+std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> umap1024;
+
+
 std::chrono::high_resolution_clock::time_point begin, end;
 
 std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>>::iterator gotmap;
@@ -28,7 +43,7 @@ std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::ti
 std::pair<std::chrono::high_resolution_clock::time_point, long int> pair;
 
 std::unordered_map<std::string, std::pair<std::chrono::high_resolution_clock::time_point, long int>> hashs [9] = 
-{umap4};
+{umap4,umap8,umap16,umap32,umap64,umap128,umap256,umap512,umap1024};
 
 // Time measurement
 //ros::Time     begin;
@@ -66,7 +81,7 @@ void mpsocToRosCallback(const std_msgs::String::ConstPtr& msg) {
 			num_msgs_counter++;
 		  	if(num_msgs_counter == NUM_MSGS) {
 		  		flag_100msgs_read = true;
-				hashs[index] = auxmap; //umap4 = auxmap;
+				hashs[index] = auxmap; 
 			}
 		}
 }
@@ -92,6 +107,8 @@ int main(int argc, char **argv)
   srand (time(NULL));
   
 
+ for(int i=0; i<3; i++) { 
+	auxmap = hashs[i];	
 
  	 while (ros::ok() && (!flag_100msgs_read)) {
  	 
@@ -128,15 +145,23 @@ int main(int argc, char **argv)
 	   	 loop_rate = ros::Rate(rate);
     
  	 }
-
+ 	msg_size = msg_size * 2;
+	flag_100msgs_read = false;
+	num_msgs_counter = 0;
+  	//std::cout << (hashs[i]).size() << std::endl;
+}
 
 
 	
- gotmap = hashs[0].begin();
+ //gotmap = hashs[0].begin();
  
  for(int i=0; i<NUM_MSGS; i++) {
-	myfile << gotmap->first << "," << gotmap->second.second << std::endl; 
-	gotmap++;
+	for(int j=0; j<3; j++) {	
+		gotmap = hashs[j].begin();
+		std::advance(gotmap,i);
+		myfile <<  gotmap->first << "," << gotmap->second.second << ",,";		
+	}
+	myfile << std::endl;
  }
 	
 		
